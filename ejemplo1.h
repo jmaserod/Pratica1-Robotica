@@ -4,6 +4,8 @@
 #include <IceUtil/Timer.h>
 #include "my_qtimer.h"
 
+//hola
+
 
 #include <QtGui>
 #include "ui_counterDlg.h"
