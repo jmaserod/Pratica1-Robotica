@@ -57,18 +57,38 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 
 void SpecificWorker::compute()
 {
-	QMutexLocker locker(mutex);
-	//computeCODE
-// 	try
-// 	{
-// 		camera_proxy->getYImage(0,img, cState, bState);
-// 		memcpy(image_gray.data, &img[0], m_width*m_height*sizeof(uchar));
-// 		searchTags(image_gray);
-// 	}
-// 	catch(const Ice::Exception &e)
-// 	{
-// 		std::cout << "Error reading from Camera" << e << std::endl;
-// 	}
+	const float threshold = 200; // millimeters
+	float rot = 0.6;  // rads per second
+	try{
+	// read laser data 
+	RoboCompLaser::TLaserData ldata = laser_proxy->getLaserData(); 
+	//sort laser data from small to large distances using a lambda function.
+	std::sort( ldata.begin(), ldata.end(), [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return a.dist < b.dist; }); 
+
+	if( ldata.front().dist < threshold)
+	{	
+		if(ldata[10].angle >= 0){	
+			std::cout << ldata.front().dist << std::endl;
+			differentialrobot_proxy->setSpeedBase(5, -0.8);
+			usleep(rand()%(1500000-100000 + 1) + 100000);  // random wait between 1.5s and 0.1sec
+		}else{
+			std::cout << ldata.front().dist << std::endl;
+			differentialrobot_proxy->setSpeedBase(5, 0.8);
+			usleep(rand()%(1500000-100000 + 1) + 100000);  // random wait between 1.5s and 0.1sec
+		}
+	}
+	else
+	{	if(ldata.front().dist < 400){
+			differentialrobot_proxy->setSpeedBase(200, 0);
+		}else{
+			differentialrobot_proxy->setSpeedBase(1000, 0);
+		}
+	}
+}
+	catch(const Ice::Exception &ex)
+	{
+	std::cout << ex << std::endl;
+	}
 }
 
 
