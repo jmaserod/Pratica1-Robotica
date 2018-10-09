@@ -58,7 +58,7 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 void SpecificWorker::compute()
 {
 	const float threshold = 200; // millimeters
-	float rot = 0.6;  // rads per second
+	float rot = 1;  // rads per second
 	try{
 	// read laser data 
 	RoboCompLaser::TLaserData ldata = laser_proxy->getLaserData(); 
@@ -67,19 +67,20 @@ void SpecificWorker::compute()
 
 	if( ldata.front().dist < threshold)
 	{	
-		if(ldata[10].angle >= 0){	
+		if(ldata[5].angle >= 0){
+			std::cout << ldata[5].angle<< std::endl;
 			std::cout << ldata.front().dist << std::endl;
-			differentialrobot_proxy->setSpeedBase(5, -0.8);
+			differentialrobot_proxy->setSpeedBase(30, -rot);
 			usleep(rand()%(1500000-100000 + 1) + 100000);  // random wait between 1.5s and 0.1sec
 		}else{
 			std::cout << ldata.front().dist << std::endl;
-			differentialrobot_proxy->setSpeedBase(5, 0.8);
+			differentialrobot_proxy->setSpeedBase(30, rot);
 			usleep(rand()%(1500000-100000 + 1) + 100000);  // random wait between 1.5s and 0.1sec
 		}
 	}
 	else
 	{	if(ldata.front().dist < 400){
-			differentialrobot_proxy->setSpeedBase(200, 0);
+			differentialrobot_proxy->setSpeedBase(300, 0);
 		}else{
 			differentialrobot_proxy->setSpeedBase(1000, 0);
 		}
