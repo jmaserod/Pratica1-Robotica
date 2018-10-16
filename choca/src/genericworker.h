@@ -32,6 +32,7 @@
 #include <GenericBase.h>
 #include <Laser.h>
 #include <GenericBase.h>
+#include <RCISMousePicker.h>
 
 #define CHECK_PERIOD 5000
 #define BASIC_PERIOD 100
@@ -43,6 +44,7 @@ using namespace std;
 using namespace RoboCompLaser;
 using namespace RoboCompGenericBase;
 using namespace RoboCompDifferentialRobot;
+using namespace RoboCompRCISMousePicker;
 
 
 
@@ -65,9 +67,10 @@ public:
 	QMutex *mutex;
 
 
-	LaserPrx laser_proxy;
 	DifferentialRobotPrx differentialrobot_proxy;
+	LaserPrx laser_proxy;
 
+	virtual void setPick(const Pick &myPick) = 0;
 
 protected:
 	QTimer timer;
