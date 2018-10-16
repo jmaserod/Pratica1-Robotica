@@ -38,13 +38,28 @@ public:
 	~SpecificWorker();
 	bool setParams(RoboCompCommonBehavior::ParameterList params);
 
+	void setPick(const Pick &myPick);
 
 public slots:
 	void compute();
 
 private:
 	InnerModel *innerModel;
+	struct Target{
+		float x,z;
+		bool empty = true;
+		Target(){};
 
+
+		bool insertCoordenates(float coordenateX, float coordenateZ){
+			x = coordenateX;
+			z = coordenateZ;
+			empty = false;
+			return true;
+		}
+	};
+Target T;
 };
+
 
 #endif

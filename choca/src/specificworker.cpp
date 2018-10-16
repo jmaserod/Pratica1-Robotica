@@ -60,13 +60,13 @@ void SpecificWorker::compute()
 	const float threshold = 200; // millimeters
 	float rot = 1;  // rads per second
 	try{
-	// read laser data 
-	RoboCompLaser::TLaserData ldata = laser_proxy->getLaserData(); 
+	// read laser data
+	RoboCompLaser::TLaserData ldata = laser_proxy->getLaserData();
 	//sort laser data from small to large distances using a lambda function.
-	std::sort( ldata.begin(), ldata.end(), [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return a.dist < b.dist; }); 
+	std::sort( ldata.begin(), ldata.end(), [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return a.dist < b.dist; });
 
 	if( ldata.front().dist < threshold)
-	{	
+	{
 		if(ldata[5].angle >= 0){
 			std::cout << ldata[5].angle<< std::endl;
 			std::cout << ldata.front().dist << std::endl;
@@ -92,5 +92,16 @@ void SpecificWorker::compute()
 	}
 }
 
+void SpecificWorker::setPick(const Pick &myPick)
+{
+	TBaseState robotState;
+	differentialrobot_proxy->getBaseState( robotState);
+
+	x = robotState.x;
+	z = robotState.z;
+
+	T.insertCoordenates(myPick.x, myPick.z);
+	differentialrobot_proxy->setSpeedBase(0, 0);
 
 
+}
