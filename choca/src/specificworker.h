@@ -45,15 +45,17 @@ public slots:
 
 private:
 	InnerModel *innerModel;
+
+	int robotX, robotZ;
 	struct Target{
-		float x,z;
+		float x, z;
 		bool empty = true;
 		Target(){};
 
 
-		bool insertCoordenates(float coordenateX, float coordenateZ){
-			x = coordenateX;
-			z = coordenateZ;
+		bool insertarCoordenadas(float coordenadaX, float coordenadaZ){
+			x = coordenadaX;
+			z = coordenadaZ;
 			empty = false;
 			return true;
 		}

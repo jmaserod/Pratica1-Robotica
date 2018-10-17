@@ -95,12 +95,12 @@ void SpecificWorker::compute()
 void SpecificWorker::setPick(const Pick &myPick)
 {
 	TBaseState robotState;
-	differentialrobot_proxy->getBaseState( robotState);
+	differentialrobot_proxy->getBaseState(robotState);
 
-	x = robotState.x;
-	z = robotState.z;
+	robotX = robotState.x;
+	robotZ = robotState.z;
 
-	T.insertCoordenates(myPick.x, myPick.z);
+	T.insertarCoordenadas(myPick.x, myPick.z);
 	differentialrobot_proxy->setSpeedBase(0, 0);
 
 
