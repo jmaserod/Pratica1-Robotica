@@ -29,6 +29,7 @@
 
 #include <genericworker.h>
 #include <innermodel/innermodel.h>
+#include <pthread.h>
 
 class SpecificWorker : public GenericWorker
 {
@@ -47,18 +48,53 @@ private:
 	InnerModel *innerModel;
 
 	int robotX, robotZ;
+	
+	
 	struct Target{
+		QMutex mutex;
 		float x, z;
-		bool empty = true;
+		bool activo = true;
 		Target(){};
 
 
 		bool insertarCoordenadas(float coordenadaX, float coordenadaZ){
+			
+		    QMutexLocker lm(&mutex);
 			x = coordenadaX;
 			z = coordenadaZ;
-			empty = false;
+			activo = false;
 			return true;
 		}
+
+		bool isActivo(){
+    
+      		return activo;
+	}
+	
+		void setActivo()
+		{
+			QMutexLocker lm(&mutex);
+			activo = true;
+        }
+
+		std::pair<float, float> extraerCoordenadas(){
+			
+			std::pair<float, float> tar;
+			QMutexLocker lm(&mutex);
+			tar.first = x;
+			tar.second = z;
+			
+			return tar;
+		}
+		
+		bool haLlegado(float coordenadaX, float coordenadaZ){
+			
+			if (coordenadaX == x && coordenadaZ == z)
+				return true;
+			
+			return false;
+		}
+		
 	};
 Target T;
 };

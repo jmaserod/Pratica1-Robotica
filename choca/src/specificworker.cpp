@@ -57,51 +57,56 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 
 void SpecificWorker::compute()
 {
-	const float threshold = 200; // millimeters
-	float rot = 1;  // rads per second
+	
+	InnerModel *innermodel;
 	try{
+	RoboCompGenericBase::TBaseState robotState;
+	differentialrobot_proxy->getBaseState(robotState);
 	// read laser data
 	RoboCompLaser::TLaserData ldata = laser_proxy->getLaserData();
 	//sort laser data from small to large distances using a lambda function.
 	std::sort( ldata.begin(), ldata.end(), [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return a.dist < b.dist; });
 
-	if( ldata.front().dist < threshold)
+	innermodel->updateTransformValues("robot", robotState.x, 0, robotState.z, 0, robotState.alpha, 0);
+
+	 Rot2D rot (robotState.alpha);
+	 auto sub = QVec::vec2(T.x - robotState.x,T.z - robotState.z);
+	 auto relative = rot.invert() *(sub);
+	 
+	 float angle = atan2(relative.x(), relative.y());
+	 float mod =relative.norm2();
+	 
+	if( 50 > mod)
 	{
-		if(ldata[5].angle >= 0){
-			std::cout << ldata[5].angle<< std::endl;
-			std::cout << ldata.front().dist << std::endl;
-			differentialrobot_proxy->setSpeedBase(30, -rot);
-			usleep(rand()%(1500000-100000 + 1) + 100000);  // random wait between 1.5s and 0.1sec
-		}else{
-			std::cout << ldata.front().dist << std::endl;
-			differentialrobot_proxy->setSpeedBase(30, rot);
-			usleep(rand()%(1500000-100000 + 1) + 100000);  // random wait between 1.5s and 0.1sec
+		differentialrobot_proxy->setSpeedBase(0,0);
+	}
+	else {
+		differentialrobot_proxy->setSpeedBase(400,angle);
+	}
+	/*	if(aleat%10 == 1){
+			differentialrobot_proxy->setSpeedBase(10,0.5);
+			usleep(aleatorio);
+
+		}
+		else{
+			differentialrobot_proxy->setSpeedBase(10,-0.5);
+			usleep(aleatorio);
 		}
 	}
 	else
-	{	if(ldata.front().dist < 400){
-			differentialrobot_proxy->setSpeedBase(300, 0);
-		}else{
-			differentialrobot_proxy->setSpeedBase(1000, 0);
-		}
-	}
+		differentialrobot_proxy->setSpeedBase(400,0);
+	*/
 }
+
 	catch(const Ice::Exception &ex)
 	{
 	std::cout << ex << std::endl;
 	}
-}
+  
 
+
+}
 void SpecificWorker::setPick(const Pick &myPick)
 {
-	TBaseState robotState;
-	differentialrobot_proxy->getBaseState(robotState);
-
-	robotX = robotState.x;
-	robotZ = robotState.z;
-
-	T.insertarCoordenadas(myPick.x, myPick.z);
-	differentialrobot_proxy->setSpeedBase(0, 0);
-
-
+	
 }
