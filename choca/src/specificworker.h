@@ -41,6 +41,7 @@ public:
 
 	void setPick(const Pick &myPick);
 
+
 public slots:
 	void compute();
 
@@ -75,7 +76,7 @@ private:
 		{
 			QMutexLocker lm(&mutex);
 			activo = true;
-        }
+}
 
 		std::pair<float, float> extraerCoordenadas(){
 			
@@ -96,7 +97,9 @@ private:
 		}
 		
 	};
-Target T;
+	
+		Target T;
+
 };
 
 

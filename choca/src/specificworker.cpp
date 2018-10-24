@@ -38,13 +38,13 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 {
 //       THE FOLLOWING IS JUST AN EXAMPLE
 //
-//	try
-//	{
-//		RoboCompCommonBehavior::Parameter par = params.at("InnerModelPath");
-//		innermodel_path = par.value;
-//		innermodel = new InnerModel(innermodel_path);
-//	}
-//	catch(std::exception e) { qFatal("Error reading config params"); }
+	try
+	{
+		RoboCompCommonBehavior::Parameter par = params.at("InnerModelPath");
+		std::string innermodel_path = par.value;
+		innerModel = new InnerModel(innermodel_path);
+}
+	catch(std::exception e) { qFatal("Error reading config params"); }
 
 
 
@@ -58,34 +58,39 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 void SpecificWorker::compute()
 {
 	
-	InnerModel *innermodel;
 	try{
-	RoboCompGenericBase::TBaseState robotState;
-	differentialrobot_proxy->getBaseState(robotState);
-	// read laser data
-	RoboCompLaser::TLaserData ldata = laser_proxy->getLaserData();
-	//sort laser data from small to large distances using a lambda function.
-	std::sort( ldata.begin(), ldata.end(), [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return a.dist < b.dist; });
 
-	innermodel->updateTransformValues("robot", robotState.x, 0, robotState.z, 0, robotState.alpha, 0);
+        RoboCompGenericBase::TBaseState robotState;
+        differentialrobot_proxy->getBaseState(robotState);
+        // read laser data
+        RoboCompLaser::TLaserData ldata = laser_proxy->getLaserData();
+        //sort laser data from small to large distances using a lambda function.
+        std::sort( ldata.begin(), ldata.end(), [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return a.dist < b.dist; });
 
-	 Rot2D rot (robotState.alpha);
-	 auto sub = QVec::vec2(T.x - robotState.x,T.z - robotState.z);
-	 auto relative = rot.invert() *(sub);
-	 
-	 float angle = atan2(relative.x(), relative.y());
-	 float mod =relative.norm2();
-	 
-	if( 50 > mod)
-	{
-		differentialrobot_proxy->setSpeedBase(0,0);
-	}
-	else {
-		differentialrobot_proxy->setSpeedBase(400,angle);
-	}
-	/*	if(aleat%10 == 1){
-			differentialrobot_proxy->setSpeedBase(10,0.5);
-			usleep(aleatorio);
+        if(T.isActivo()){
+
+             innerModel->updateTransformValues("base", robotState.x, 0, robotState.z, 0, robotState.alpha, 0);
+
+             Rot2D rot (robotState.alpha);
+             auto sub = QVec::vec2(T.x - robotState.x, T.z - robotState.z);
+             auto relative = rot.invert() *(sub);
+
+             float angle = atan2(relative.x(), relative.y());
+             float mod =relative.norm2();
+
+            if( 50 > mod)
+            {
+                differentialrobot_proxy->setSpeedBase(0,0);
+                T.setInactivo();
+            }
+            else {
+                differentialrobot_proxy->setSpeedBase(400,angle);
+                }
+
+        }
+        /*	if(aleat%10 == 1){
+                differentialrobot_proxy->setSpeedBase(10,0.5);
+                usleep(aleatorio);
 
 		}
 		else{
@@ -96,17 +101,18 @@ void SpecificWorker::compute()
 	else
 		differentialrobot_proxy->setSpeedBase(400,0);
 	*/
-}
-
-	catch(const Ice::Exception &ex)
-	{
-	std::cout << ex << std::endl;
-	}
+    } catch(const Ice::Exception &ex)
+	    {
+	        std::cout << ex << std::endl;
+	    }
   
 
 
 }
 void SpecificWorker::setPick(const Pick &myPick)
 {
-	
+        qDebug()<<myPick.x<<myPick.z;
+
+    	T.insertarCoordenadas(myPick.x, myPick.z);
+
 }
