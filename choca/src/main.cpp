@@ -18,11 +18,11 @@
  */
 
 
-/** \mainpage RoboComp::chocachoca
+/** \mainpage RoboComp::choca
  *
  * \section intro_sec Introduction
  *
- * The chocachoca component...
+ * The choca component...
  *
  * \section interface_sec Interface
  *
@@ -34,7 +34,7 @@
  * ...
  *
  * \subsection install2_ssec Compile and install
- * cd chocachoca
+ * cd choca
  * <br>
  * cmake . && make
  * <br>
@@ -52,7 +52,7 @@
  *
  * \subsection execution_ssec Execution
  *
- * Just: "${PATH_TO_BINARY}/chocachoca --Ice.Config=${PATH_TO_CONFIG_FILE}"
+ * Just: "${PATH_TO_BINARY}/choca --Ice.Config=${PATH_TO_CONFIG_FILE}"
  *
  * \subsection running_ssec Once running
  *
@@ -81,13 +81,19 @@
 #include "specificmonitor.h"
 #include "commonbehaviorI.h"
 
+#include <gotopointI.h>
 #include <rcismousepickerI.h>
+#include <apriltagsI.h>
 
-#include <Laser.h>
-#include <GenericBase.h>
 #include <DifferentialRobot.h>
 #include <GenericBase.h>
+#include <Laser.h>
+#include <GenericBase.h>
 #include <RCISMousePicker.h>
+#include <GotoPoint.h>
+#include <AprilTags.h>
+#include <GenericBase.h>
+#include <JointMotor.h>
 
 
 // User includes here
@@ -96,10 +102,10 @@
 using namespace std;
 using namespace RoboCompCommonBehavior;
 
-class chocachoca : public RoboComp::Application
+class choca : public RoboComp::Application
 {
 public:
-	chocachoca (QString prfx) { prefix = prfx.toStdString(); }
+	choca (QString prfx) { prefix = prfx.toStdString(); }
 private:
 	void initialize();
 	std::string prefix;
@@ -109,14 +115,14 @@ public:
 	virtual int run(int, char*[]);
 };
 
-void ::chocachoca::initialize()
+void ::choca::initialize()
 {
 	// Config file properties read example
 	// configGetString( PROPERTY_NAME_1, property1_holder, PROPERTY_1_DEFAULT_VALUE );
 	// configGetInt( PROPERTY_NAME_2, property1_holder, PROPERTY_2_DEFAULT_VALUE );
 }
 
-int ::chocachoca::run(int argc, char* argv[])
+int ::choca::run(int argc, char* argv[])
 {
 #ifdef USE_QTGUI
 	QApplication a(argc, argv);  // GUI application
@@ -156,7 +162,7 @@ int ::chocachoca::run(int argc, char* argv[])
 	}
 	catch(const Ice::Exception& ex)
 	{
-		cout << "[" << PROGRAM_NAME << "]: Exception creating proxy Laser: " << ex;
+		cout << "[" << PROGRAM_NAME << "]: Exception: " << ex;
 		return EXIT_FAILURE;
 	}
 	rInfo("LaserProxy initialized Ok!");
@@ -173,7 +179,7 @@ int ::chocachoca::run(int argc, char* argv[])
 	}
 	catch(const Ice::Exception& ex)
 	{
-		cout << "[" << PROGRAM_NAME << "]: Exception creating proxy DifferentialRobot: " << ex;
+		cout << "[" << PROGRAM_NAME << "]: Exception: " << ex;
 		return EXIT_FAILURE;
 	}
 	rInfo("DifferentialRobotProxy initialized Ok!");
@@ -208,93 +214,106 @@ int ::chocachoca::run(int argc, char* argv[])
 
 	try
 	{
-		try {
-			// Server adapter creation and publication
-			if (not GenericMonitor::configGetString(communicator(), prefix, "CommonBehavior.Endpoints", tmp, "")) {
-				cout << "[" << PROGRAM_NAME << "]: Can't read configuration for proxy CommonBehavior\n";
-			}
-			Ice::ObjectAdapterPtr adapterCommonBehavior = communicator()->createObjectAdapterWithEndpoints(
-					"commonbehavior", tmp);
-			CommonBehaviorI *commonbehaviorI = new CommonBehaviorI(monitor);
-			adapterCommonBehavior->add(commonbehaviorI, communicator()->stringToIdentity("commonbehavior"));
-			adapterCommonBehavior->activate();
-		}
-		catch(const Ice::Exception& ex)
+		// Server adapter creation and publication
+		if (not GenericMonitor::configGetString(communicator(), prefix, "CommonBehavior.Endpoints", tmp, ""))
 		{
-			status = EXIT_FAILURE;
-
-			cout << "[" << PROGRAM_NAME << "]: Exception raised while creating CommonBehavior adapter: " << endl;
-			cout << ex;
-
+			cout << "[" << PROGRAM_NAME << "]: Can't read configuration for proxy CommonBehavior\n";
 		}
+		Ice::ObjectAdapterPtr adapterCommonBehavior = communicator()->createObjectAdapterWithEndpoints("commonbehavior", tmp);
+		CommonBehaviorI *commonbehaviorI = new CommonBehaviorI(monitor );
+		adapterCommonBehavior->add(commonbehaviorI, communicator()->stringToIdentity("commonbehavior"));
+		adapterCommonBehavior->activate();
 
 
+
+
+		// Server adapter creation and publication
+		if (not GenericMonitor::configGetString(communicator(), prefix, "GotoPoint.Endpoints", tmp, ""))
+		{
+			cout << "[" << PROGRAM_NAME << "]: Can't read configuration for proxy GotoPoint";
+		}
+		Ice::ObjectAdapterPtr adapterGotoPoint = communicator()->createObjectAdapterWithEndpoints("GotoPoint", tmp);
+		GotoPointI *gotopoint = new GotoPointI(worker);
+		adapterGotoPoint->add(gotopoint, communicator()->stringToIdentity("gotopoint"));
+		adapterGotoPoint->activate();
+		cout << "[" << PROGRAM_NAME << "]: GotoPoint adapter created in port " << tmp << endl;
 
 
 
 
 
 		// Server adapter creation and publication
-		IceStorm::TopicPrx rcismousepicker_topic;
-		Ice::ObjectPrx rcismousepicker;
-		try
+		if (not GenericMonitor::configGetString(communicator(), prefix, "AprilTagsTopic.Endpoints", tmp, ""))
 		{
-			if (not GenericMonitor::configGetString(communicator(), prefix, "RCISMousePickerTopic.Endpoints", tmp, ""))
-			{
-				cout << "[" << PROGRAM_NAME << "]: Can't read configuration for proxy RCISMousePickerProxy";
-			}
-			Ice::ObjectAdapterPtr RCISMousePicker_adapter = communicator()->createObjectAdapterWithEndpoints("rcismousepicker", tmp);
-			RCISMousePickerPtr rcismousepickerI_ = new RCISMousePickerI(worker);
-			Ice::ObjectPrx rcismousepicker = RCISMousePicker_adapter->addWithUUID(rcismousepickerI_)->ice_oneway();
-			if(!rcismousepicker_topic)
-			{
-				try {
-					rcismousepicker_topic = topicManager->create("RCISMousePicker");
-				}
-				catch (const IceStorm::TopicExists&) {
-					//Another client created the topic
-					try{
-						cout << "[" << PROGRAM_NAME << "]: Probably other client already opened the topic. Trying to connect.\n";
-						rcismousepicker_topic = topicManager->retrieve("RCISMousePicker");
-					}
-					catch(const IceStorm::NoSuchTopic&)
-					{
-						//Error. Topic does not exist
-						cout << "[" << PROGRAM_NAME << "]: Topic doesn't exists and couldn't be created.\n";
-					}
-				}
-				IceStorm::QoS qos;
-				rcismousepicker_topic->subscribeAndGetPublisher(qos, rcismousepicker);
-			}
-			RCISMousePicker_adapter->activate();
+			cout << "[" << PROGRAM_NAME << "]: Can't read configuration for proxy AprilTagsProxy";
+		}
+		Ice::ObjectAdapterPtr AprilTags_adapter = communicator()->createObjectAdapterWithEndpoints("apriltags", tmp);
+		AprilTagsPtr apriltagsI_ = new AprilTagsI(worker);
+		Ice::ObjectPrx apriltags = AprilTags_adapter->addWithUUID(apriltagsI_)->ice_oneway();
+		IceStorm::TopicPrx apriltags_topic;
+		if(!apriltags_topic){
+		try {
+			apriltags_topic = topicManager->create("AprilTags");
+		}
+		catch (const IceStorm::TopicExists&) {
+		//Another client created the topic
+		try{
+			apriltags_topic = topicManager->retrieve("AprilTags");
 		}
 		catch(const IceStorm::NoSuchTopic&)
 		{
-			cout << "[" << PROGRAM_NAME << "]: Error creating RCISMousePicker topic.\n";
 			//Error. Topic does not exist
+			}
 		}
+		IceStorm::QoS qos;
+		apriltags_topic->subscribeAndGetPublisher(qos, apriltags);
+		}
+		AprilTags_adapter->activate();
+
+		// Server adapter creation and publication
+		if (not GenericMonitor::configGetString(communicator(), prefix, "RCISMousePickerTopic.Endpoints", tmp, ""))
+		{
+			cout << "[" << PROGRAM_NAME << "]: Can't read configuration for proxy RCISMousePickerProxy";
+		}
+		Ice::ObjectAdapterPtr RCISMousePicker_adapter = communicator()->createObjectAdapterWithEndpoints("rcismousepicker", tmp);
+		RCISMousePickerPtr rcismousepickerI_ = new RCISMousePickerI(worker);
+		Ice::ObjectPrx rcismousepicker = RCISMousePicker_adapter->addWithUUID(rcismousepickerI_)->ice_oneway();
+		IceStorm::TopicPrx rcismousepicker_topic;
+		if(!rcismousepicker_topic){
+		try {
+			rcismousepicker_topic = topicManager->create("RCISMousePicker");
+		}
+		catch (const IceStorm::TopicExists&) {
+		//Another client created the topic
+		try{
+			rcismousepicker_topic = topicManager->retrieve("RCISMousePicker");
+		}
+		catch(const IceStorm::NoSuchTopic&)
+		{
+			//Error. Topic does not exist
+			}
+		}
+		IceStorm::QoS qos;
+		rcismousepicker_topic->subscribeAndGetPublisher(qos, rcismousepicker);
+		}
+		RCISMousePicker_adapter->activate();
 
 		// Server adapter creation and publication
 		cout << SERVER_FULL_NAME " started" << endl;
 
 		// User defined QtGui elements ( main window, dialogs, etc )
 
-		#ifdef USE_QTGUI
-			//ignoreInterrupt(); // Uncomment if you want the component to ignore console SIGINT signal (ctrl+c).
-			a.setQuitOnLastWindowClosed( true );
-		#endif
+#ifdef USE_QTGUI
+		//ignoreInterrupt(); // Uncomment if you want the component to ignore console SIGINT signal (ctrl+c).
+		a.setQuitOnLastWindowClosed( true );
+#endif
 		// Run QT Application Event Loop
 		a.exec();
 
-		try
-		{
-			std::cout << "Unsubscribing topic: rcismousepicker " <<std::endl;
-			rcismousepicker_topic->unsubscribe( rcismousepicker );
-		}
-		catch(const Ice::Exception& ex)
-		{
-			std::cout << "ERROR Unsubscribing topic: rcismousepicker " <<std::endl;
-		}
+		std::cout << "Unsubscribing topic: rcismousepicker " <<std::endl;
+		rcismousepicker_topic->unsubscribe( rcismousepicker );
+		std::cout << "Unsubscribing topic: apriltags " <<std::endl;
+		apriltags_topic->unsubscribe( apriltags );
 
 		status = EXIT_SUCCESS;
 	}
@@ -309,6 +328,7 @@ int ::chocachoca::run(int argc, char* argv[])
 	#ifdef USE_QTGUI
 		a.quit();
 	#endif
+
 
 	status = EXIT_SUCCESS;
 	monitor->terminate();
@@ -352,7 +372,7 @@ int main(int argc, char* argv[])
 			printf("Configuration prefix: <%s>\n", prefix.toStdString().c_str());
 		}
 	}
-	::chocachoca app(prefix);
+	::choca app(prefix);
 
 	return app.main(argc, argv, configFile.c_str());
 }

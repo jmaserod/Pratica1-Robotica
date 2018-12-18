@@ -1,6 +1,8 @@
 import "DifferentialRobot.idsl";
 import "Laser.idsl";
 import "RCISMousePicker.idsl";
+import "GotoPoint.idsl";
+import "AprilTags.idsl";
 
 Component choca
 {
@@ -8,8 +10,11 @@ Component choca
 	{
 		requires DifferentialRobot, Laser;
 		subscribesTo RCISMousePicker;
+		implements GotoPoint;
+		subscribesTo AprilTags;
 	};
 	language Cpp;
 	gui Qt(QWidget);
+
 };
 

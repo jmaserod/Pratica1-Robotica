@@ -45,6 +45,15 @@ public:
 	~SpecificWorker();
 	bool setParams(RoboCompCommonBehavior::ParameterList params);
 
+
+
+    void go(const string &nodo, const float x, const float y, const float alpha);
+	void turn(const float speed);
+	bool atTarget();
+	void stop();
+	void newAprilTagAndPose(const tagsList &tags, const RoboCompGenericBase::TBaseState &bState, const RoboCompJointMotor::MotorStateMap &hState);
+    void newAprilTag(const tagsList &tags);
+
 	void setPick(const Pick &myPick);
 
 
@@ -66,7 +75,7 @@ private:
 
 	int robotX, robotZ;
 
-    enum class State {INIT,GOTO,BUG};
+    enum class State {IDLE,GOTO,STOP};
 
 	struct Target{
 		QMutex mutex;
@@ -100,7 +109,7 @@ private:
 			activo = act;
 }
 
-		QVec extraerCoordenadas(){
+		    QVec extraerCoordenadas(){
             qDebug()<< "Estoy aquiiiiiiiiiiii";
 
 			QMutexLocker l(&mutex);
@@ -129,7 +138,7 @@ private:
 	   Target T;
 	   QVec target;
 	   QLine2D linea;
-	   State state = State::INIT;
+	  // State state = State::INIT;
 	   float distanciaAnterior;
 	   std::atomic<bool> targetReady = false;
        std::atomic<bool> planReady = false;

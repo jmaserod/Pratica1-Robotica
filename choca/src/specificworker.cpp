@@ -69,9 +69,12 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 	connect(buttonSave, SIGNAL(clicked()), this, SLOT(saveToFile()));
 	connect(buttonRead, SIGNAL(clicked()), this, SLOT(readFromFile()));
 
+
 	timer.start();
 	// AutoLoad Map
 	readFromFile();
+	qDebug() << "CELIA" ;
+
 
 	return true;
 }
@@ -79,11 +82,12 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 void SpecificWorker::compute()
 {
 	static RoboCompGenericBase::TBaseState bState;
+	differentialrobot_proxy->getBaseState(bState);
+    innerModel->updateTransformValues("base", bState.x, 0, bState.z, 0, bState.alpha, 0);
+    RoboCompLaser::TLaserData ldata = laser_proxy->getLaserData();
+
      	try
      	{
-     		differentialrobot_proxy->getBaseState(bState);
-            		innerModel->updateTransformValues("base", bState.x, 0, bState.z, 0, bState.alpha, 0);
-            		RoboCompLaser::TLaserData ldata = laser_proxy->getLaserData();
 
             		//draw robot
             		robot->setPos(bState.x, bState.z);
@@ -106,7 +110,7 @@ void SpecificWorker::compute()
             					differentialrobot_proxy->setSpeedBase(0,0);
 
             					targetReady = false;
-            				}
+            				} //GOTO
             				else if(mod < 50)
                             {
                                qDebug() << "Picking new point";
@@ -122,6 +126,7 @@ void SpecificWorker::compute()
             			}
             			else
             			{
+            			//BUSCAR (DIJSKTRA)
             				qDebug() << bState.x << bState.z << target.x() << target.z() ;
             				path = grid.getOptimalPath(QVec::vec3(bState.x,0,bState.z), target);
             				for(auto &p: path)
@@ -153,6 +158,7 @@ void SpecificWorker::readFromFile()
 {
 	std::ifstream myfile;
 	myfile.open(fileName, std::ifstream::in);
+    	qDebug() << "CELIA" ;
 
 	if(!myfile.fail())
 	{
@@ -236,7 +242,38 @@ void SpecificWorker::draw()
 /////////////// PATH PLANNING /////7
 
 
+void SpecificWorker::go(const string &nodo, const float x, const float y, const float alpha)
+{
+//implementCODE
 
+     T.insertarCoordenadas(x,y);
+     T.setActivo(true);
+}
+
+void SpecificWorker::turn(const float speed)
+{
+//implementCODE
+
+    differentialrobot_proxy->setSpeedBase(speed,0);
+
+}
+
+bool SpecificWorker::atTarget()
+{
+//implementCODE
+
+    return !T.isActivo();
+
+
+}
+
+void SpecificWorker::stop()
+{
+//implementCODE
+
+    differentialrobot_proxy->stopBase();
+
+}
 
 /////////////////////////////////////////////////////////77
 /////////
@@ -254,4 +291,18 @@ void SpecificWorker::setPick(const Pick &myPick)
     	for(auto gp: greenPath)
     		delete gp;
     greenPath.clear();
+}
+
+void SpecificWorker::newAprilTagAndPose(const tagsList &tags, const RoboCompGenericBase::TBaseState &bState, const RoboCompJointMotor::MotorStateMap &hState)
+{
+
+
+}
+void SpecificWorker::newAprilTag(const tagsList &tags)
+{
+    for(auto &marca : tags)
+        qDebug()<< marca.id;
+//currentTags.set(tags);
+
+
 }
